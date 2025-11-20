@@ -52,16 +52,18 @@ class ModelToBeEvaluated:
         file_needle = 0
         for _part in re.split(r'(<video>|<image>)', _one_piece.question):
             if _part == '<video>':
-                filename = PHYSBENCH_DATADIR / 'video' / _one_piece.file_names[file_needle]
+                _filename = PHYSBENCH_DATADIR / 'video' / _one_piece.file_names[file_needle]
+                _filename = str(_filename)
                 file_needle += 1
                 content.append({
-                    'type': 'video', 'video': filename
+                    'type': 'video', 'video': _filename
                 })
             elif _part == '<image>':
-                filename = PHYSBENCH_DATADIR / 'image' / _one_piece.file_names[file_needle]
+                _filename = PHYSBENCH_DATADIR / 'image' / _one_piece.file_names[file_needle]
+                _filename = str(_filename)
                 file_needle += 1
                 content.append({
-                    'type': 'image', 'image': filename
+                    'type': 'image', 'image': _filename
                 })
             else:
                 content.append({
@@ -102,9 +104,11 @@ def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
         all_res.append({'idx':one_piece.idx, 'answer':response})
         all_res_dic[one_piece.idx] = response
     
+    auto_dump(all_res, SRC_DIR / 'results' / f'{model_name}.json')
+
     _ans_id_dic = dict(zip('ABCD', range(4)))
     pred, label = [], []
-    for _val_label_dic in auto_load(PHYSBENCH_DATADIR/'val_answer.json'):
+    for _val_label_dic in tqdm.tqdm(auto_load(PHYSBENCH_DATADIR/'val_answer.json')):
         if not _val_label_dic['answer']:
             continue
         pred.append(_ans_id_dic[all_res_dic[_val_label_dic['idx']]])
@@ -118,13 +122,19 @@ def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
 
 
 if __name__ == '__main__':
+    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+
     _model = lambda x: 'A'
+    _model_name = 'all_A'
     _model = QwenVL(batch_output=False)
+    _model_name = 'qwenvl_raw'
     _model = InternVL3_5()
+    _model_name = 'internvl_raw'
     _model = LLaVA_NeXT_Video()
+    _model_name = 'llavanv_raw'
 
     eval_physbench(
         model=ModelToBeEvaluated(_model),
-        model_name='',
-        just_val=False,
+        model_name=_model_name,
+        just_val=True,
     )
