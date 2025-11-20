@@ -71,6 +71,18 @@ class ModelToBeEvaluated:
                 })
         conversation = [{'role': 'user', 'content': content}]
         response = self.model(conversation)
+        
+        format_conversation = [{
+            'role': 'user', 'content': f'''
+# Reasoning Paragraph
+{response}
+
+# Instruction
+Given the whole reasoning paragraph, conclude the output shortly.
+Just output one single character: `A`, `B`, `C`, or `D`.
+'''.strip()
+        }]
+        response = self.model(format_conversation)
         response = self.postprocess_reponse(response)
         return response
     
@@ -79,6 +91,8 @@ class ModelToBeEvaluated:
         def check(candidate:str):
             if len(candidate) == 1 and candidate.upper() in 'ABCD':
                 return candidate.upper()
+            elif len(candidate) == 2 and candidate[0].upper() in 'ABCD' and candidate[1] == '.':
+                return candidate[0].upper()
             return None
         
         words = response.split()
