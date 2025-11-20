@@ -111,7 +111,7 @@ Just output one single character: `A`, `B`, `C`, or `D`.
 def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
     all_res = []
     all_res_dic = {}
-    for one_piece in PhysBenchData():
+    for one_piece in tqdm.tqdm(PhysBenchData()):
         if just_val and one_piece.split != 'val':
             continue
         response = model.qa(one_piece)
@@ -122,12 +122,12 @@ def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
 
     _ans_id_dic = dict(zip('ABCD', range(4)))
     pred, label = [], []
-    for _val_label_dic in tqdm.tqdm(auto_load(PHYSBENCH_DATADIR/'val_answer.json')):
+    for _val_label_dic in auto_load(PHYSBENCH_DATADIR/'val_answer.json'):
         if not _val_label_dic['answer']:
             continue
         pred.append(_ans_id_dic[all_res_dic[_val_label_dic['idx']]])
         label.append(_ans_id_dic[_val_label_dic['answer']])
-    print(pred, label)
+    # print(pred, label)
     import sklearn.metrics
     p,r,f,cnt = sklearn.metrics.precision_recall_fscore_support(label, pred)
     print(
@@ -136,16 +136,16 @@ def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
 
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+    os.environ['CUDA_VISIBLE_DEVICES'] = '1,2'
 
     _model = lambda x: 'A'
     _model_name = 'all_A'
-    _model = QwenVL(batch_output=False)
-    _model_name = 'qwenvl_raw'
     _model = InternVL3_5()
     _model_name = 'internvl_raw'
     _model = LLaVA_NeXT_Video()
     _model_name = 'llavanv_raw'
+    _model = QwenVL(batch_output=False)
+    _model_name = 'qwenvl_raw'
 
     eval_physbench(
         model=ModelToBeEvaluated(_model),
