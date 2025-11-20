@@ -73,7 +73,8 @@ class ModelToBeEvaluated:
         response = self.model(conversation)
         
         format_conversation = [{
-            'role': 'user', 'content': f'''
+            'role': 'user', 'content': [
+                {'type': 'text', 'text': f'''
 # Reasoning Paragraph
 {response}
 
@@ -81,6 +82,8 @@ class ModelToBeEvaluated:
 Given the whole reasoning paragraph, conclude the output shortly.
 Just output one single character: `A`, `B`, `C`, or `D`.
 '''.strip()
+                }
+            ]
         }]
         response = self.model(format_conversation)
         response = self.postprocess_reponse(response)
