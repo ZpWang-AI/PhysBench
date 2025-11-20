@@ -109,16 +109,20 @@ Just output one single character: `A`, `B`, `C`, or `D`.
     
 
 def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
-    all_res = []
-    all_res_dic = {}
+    save_filename = SRC_DIR / 'results' / f'{model_name}.json'
+    all_res = auto_load(save_filename) if save_filename.exists() else []
+    all_res_dic = {_dic['idx']:_dic['answer'] for _dic in all_res}
     for one_piece in tqdm.tqdm(PhysBenchData()):
         if just_val and one_piece.split != 'val':
             continue
+        if one_piece.idx in all_res_dic:
+            continue
+
         response = model.qa(one_piece)
         all_res.append({'idx':one_piece.idx, 'answer':response})
+        all_res.sort(key=lambda x:x['idx'])
         all_res_dic[one_piece.idx] = response
-    
-    auto_dump(all_res, SRC_DIR / 'results' / f'{model_name}.json')
+        auto_dump(all_res, save_filename)
 
     _ans_id_dic = dict(zip('ABCD', range(4)))
     pred, label = [], []
