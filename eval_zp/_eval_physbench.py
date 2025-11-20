@@ -144,12 +144,12 @@ if __name__ == '__main__':
 
     _model = lambda x: 'A'
     _model_name = 'all_A'
-    _model = InternVL3_5()
-    _model_name = 'internvl_raw'
-    _model = LLaVA_NeXT_Video()
-    _model_name = 'llavanv_raw'
     _model = QwenVL(batch_output=False)
     _model_name = 'qwenvl_raw'
+    _model = LLaVA_NeXT_Video()
+    _model_name = 'llavanv_raw'
+    _model = InternVL3_5()
+    _model_name = 'internvl_raw'
 
     eval_physbench(
         model=ModelToBeEvaluated(_model),
