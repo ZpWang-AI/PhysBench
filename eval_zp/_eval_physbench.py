@@ -52,13 +52,16 @@ class ModelToBeEvaluated:
         file_needle = 0
         for _part in re.split(r'(<video>|<image>)', _one_piece.question):
             if _part == '<video>':
-                content.append({
-                    'type': 'video', 'video': _one_piece.file_names[file_needle]
-                })
+                filename = PHYSBENCH_DATADIR / 'video' / _one_piece.file_names[file_needle]
                 file_needle += 1
-            elif _part == '<image>':
                 content.append({
-                    'type': 'image', 'image': _one_piece.file_names[file_needle]
+                    'type': 'video', 'video': filename
+                })
+            elif _part == '<image>':
+                filename = PHYSBENCH_DATADIR / 'image' / _one_piece.file_names[file_needle]
+                file_needle += 1
+                content.append({
+                    'type': 'image', 'image': filename
                 })
             else:
                 content.append({
