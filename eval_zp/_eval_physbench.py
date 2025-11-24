@@ -73,6 +73,9 @@ class ModelToBeEvaluated:
         conversation = [{'role': 'user', 'content': content}]
         response = self.model(conversation)
         raw_response = response
+        _output = self.postprocess_reponse(raw_response)
+        if _output:
+            return _output
         
         format_conversation = [{
             'role': 'user', 'content': [
@@ -90,10 +93,10 @@ DO NOT add any extra text or format decoration!
         }]
         response = self.model(format_conversation)
         formatted_response = response
-        response = self.postprocess_reponse(response)
-        if not response:
+        _output = self.postprocess_reponse(response)
+        if not _output:
             FileIO.txt_dump(f'>> {self.model_name} <<\n{gap_line(fillchar="-")}\n{raw_response}\n{gap_line(fillchar="-")}\n{formatted_response}\n{gap_line()}\n', SRC_DIR/'~unformatted_response.txt', 'a')
-        return response
+        return _output
     
     # @classmethod
     def postprocess_reponse(self, response:str) -> str:
@@ -127,6 +130,12 @@ DO NOT add any extra text or format decoration!
         if ans: return ans
         ans = check3(words[-1])
         if ans: return ans
+
+        if len(words) == 3 and re.match(r'^\W+$', words[0]) and re.match(r'^\W+$', words[2]):
+            ans = check2(words[1])
+            if ans: return ans
+            ans = check3(words[1])
+            if ans: return ans
 
         return None
 
