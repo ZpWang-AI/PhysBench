@@ -89,9 +89,10 @@ DO NOT add any extra text or format decoration!
             ]
         }]
         response = self.model(format_conversation)
+        formatted_response = response
         response = self.postprocess_reponse(response)
         if not response:
-            FileIO.txt_dump(f'>> {self.model_name} <<\n{gap_line(fillchar="-")}\n{raw_response}\n{gap_line(fillchar="-")}\n{response}\n{gap_line()}\n', SRC_DIR/'~unformatted_response.txt', 'a')
+            FileIO.txt_dump(f'>> {self.model_name} <<\n{gap_line(fillchar="-")}\n{raw_response}\n{gap_line(fillchar="-")}\n{formatted_response}\n{gap_line()}\n', SRC_DIR/'~unformatted_response.txt', 'a')
         return response
     
     # @classmethod
