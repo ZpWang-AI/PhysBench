@@ -93,21 +93,39 @@ DO NOT add any extra text or format decoration!
     
     # @classmethod
     def postprocess_reponse(self, response:str) -> str:
-        def check(candidate:str):
-            # if len(candidate) == 1 and candidate.upper() in 'ABCD':
-            #     return candidate.upper()
-            if len(candidate) == 2 and candidate[0].upper() in 'ABCD' and candidate[1] == '.':
-                return candidate[0].upper()
-            return None
-        
-        words = response.split()
-        ans = check(words[0])
+        def check_ABCD(candidate: str):
+            match = re.match(r'^[A-D]$', candidate)
+            if match:
+                return match.group()
+
+        def check2(candidate: str):
+            match = re.match(r'^([A-D])\.$', candidate)
+            if match:
+                return match.group(1)
+
+        def check3(candidate: str):
+            match = re.match(r'^\W([A-D])(.)?\W$', candidate)
+            if match:
+                return match.group(1)
+
+        response = response.strip()
+
+        ans = check_ABCD(response)
         if ans: return ans
-        ans = check(words[-1])
+
+        words = response.split()
+
+        ans = check2(words[0])
+        if ans: return ans
+        ans = check2(words[-1])
+        if ans: return ans
+        ans = check3(words[0])
+        if ans: return ans
+        ans = check3(words[-1])
         if ans: return ans
         
         print(f'> {response} < unformatted response')
-        FileIO.txt_dump(f'>> {self.model_name} <<\n{response}\n\n\n', SRC_DIR/'unformatted_response.txt', 'a')
+        FileIO.txt_dump(f'>> {self.model_name} <<\n{response}\n\n\n', SRC_DIR/'~unformatted_response.txt', 'a')
         return None
 
         for i in range(len(words)-2, 0, -1):
@@ -124,7 +142,7 @@ def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
     for one_piece in tqdm.tqdm(PhysBenchData()):
         if just_val and one_piece.split != 'val':
             continue
-        if one_piece.idx in all_res_dic:
+        if one_piece.idx in all_res_dic and all_res_dic[one_piece.idx]:
             continue
 
         response = model.qa(one_piece)
