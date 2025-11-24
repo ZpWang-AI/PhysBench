@@ -72,6 +72,7 @@ class ModelToBeEvaluated:
                 })
         conversation = [{'role': 'user', 'content': content}]
         response = self.model(conversation)
+        raw_response = response
         
         format_conversation = [{
             'role': 'user', 'content': [
@@ -89,6 +90,8 @@ DO NOT add any extra text or format decoration!
         }]
         response = self.model(format_conversation)
         response = self.postprocess_reponse(response)
+        if not response:
+            FileIO.txt_dump(f'>> {self.model_name} <<\n{gap_line(fillchar="-")}\n{raw_response}\n{gap_line(fillchar="-")}\n{response}\n{gap_line()}\n', SRC_DIR/'~unformatted_response.txt', 'a')
         return response
     
     # @classmethod
@@ -123,9 +126,7 @@ DO NOT add any extra text or format decoration!
         if ans: return ans
         ans = check3(words[-1])
         if ans: return ans
-        
-        print(f'> {response} < unformatted response')
-        FileIO.txt_dump(f'>> {self.model_name} <<\n{response}\n\n\n', SRC_DIR/'~unformatted_response.txt', 'a')
+
         return None
 
         for i in range(len(words)-2, 0, -1):
