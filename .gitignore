@@ -163,4 +163,5 @@ cython_debug/
 # ===============
 
 ~*
-eval_zp/results
+*.old
+eval_zp/*results*

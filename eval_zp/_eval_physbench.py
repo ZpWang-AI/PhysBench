@@ -166,7 +166,7 @@ if __name__ == '__main__':
     _model_name = 'internvl_cls_20000'
 
     eval_physbench(
-        model=ModelToBeEvaluated(_model),
+        model=ModelToBeEvaluated(_model, _model_name),
         model_name=_model_name,
         just_val=True,
     )
