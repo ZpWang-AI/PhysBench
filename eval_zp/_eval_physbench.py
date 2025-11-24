@@ -148,10 +148,17 @@ def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
             continue
 
         response = model.qa(one_piece)
-        all_res.append({'idx':one_piece.idx, 'answer':response})
-        all_res.sort(key=lambda x:x['idx'])
+
+        if one_piece.idx not in all_res_dic:
+            all_res.append({'idx':one_piece.idx, 'answer':response})
+            all_res.sort(key=lambda x:x['idx'])
+        else:
+            for _dic in all_res:
+                if _dic['idx'] == one_piece.idx:
+                    _dic['answer'] = response
         all_res_dic[one_piece.idx] = response
         auto_dump(all_res, save_filename)
+
 
     _ans_id_dic = dict(zip('ABCD', range(4)))
     pred, label = [], []
