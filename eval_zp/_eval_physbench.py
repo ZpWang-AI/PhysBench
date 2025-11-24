@@ -80,7 +80,8 @@ class ModelToBeEvaluated:
 
 # Instruction
 Given the whole reasoning paragraph, conclude the output shortly.
-Just output one single character: `A`, `B`, `C`, or `D`.
+JUST output one single choice: `A.`, `B.`, `C.`, or `D.`.
+DO NOT add any extra text or format decoration!
 '''.strip()
                 }
             ]
@@ -92,9 +93,9 @@ Just output one single character: `A`, `B`, `C`, or `D`.
     @classmethod
     def postprocess_reponse(cls, response:str) -> str:
         def check(candidate:str):
-            if len(candidate) == 1 and candidate.upper() in 'ABCD':
-                return candidate.upper()
-            elif len(candidate) == 2 and candidate[0].upper() in 'ABCD' and candidate[1] == '.':
+            # if len(candidate) == 1 and candidate.upper() in 'ABCD':
+            #     return candidate.upper()
+            if len(candidate) == 2 and candidate[0].upper() in 'ABCD' and candidate[1] == '.':
                 return candidate[0].upper()
             return None
         
@@ -103,7 +104,10 @@ Just output one single character: `A`, `B`, `C`, or `D`.
         if ans: return ans
         ans = check(words[-1])
         if ans: return ans
+        
         print(f'> {response} < unformatted response')
+        FileIO.txt_dump(f'{response}\n\n', SRC_DIR/'unformatted_response.txt', 'a')
+
         for i in range(len(words)-2, 0, -1):
             ans = check(words[i])
             if ans:
@@ -136,6 +140,9 @@ def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
         label.append(_ans_id_dic[_val_label_dic['answer']])
     # print(pred, label)
     import sklearn.metrics
+    acc = sklearn.metrics.accuracy_score(label, pred)
+    print(acc, len(pred)*acc, len(pred))
+    return
     p,r,f,cnt = sklearn.metrics.precision_recall_fscore_support(label, pred)
     print(
         f'p: {p}\nr: {r}\nf: {f}\nlabels: {cnt}\nmacro-f1: {np.average(f):.4f}'
@@ -153,6 +160,8 @@ if __name__ == '__main__':
     _model_name = 'llavanv_raw'
     _model = InternVL3_5()
     _model_name = 'internvl_raw'
+    _model = InternVL3_5('/home/zhipang/PhysicalDynamics/data/llama_factory_data/data/saves/internvl_cls_20000.merged')
+    _model_name = 'internvl_cls_20000'
 
     eval_physbench(
         model=ModelToBeEvaluated(_model),
