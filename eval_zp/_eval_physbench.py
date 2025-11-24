@@ -44,8 +44,9 @@ class PhysBenchData:
 
 
 class ModelToBeEvaluated:
-    def __init__(self, model):
+    def __init__(self, model, model_name):
         self.model = model
+        self.model_name = model_name
 
     def qa(self, _one_piece:One_PhysBench) -> str:
         content = []
@@ -90,8 +91,8 @@ DO NOT add any extra text or format decoration!
         response = self.postprocess_reponse(response)
         return response
     
-    @classmethod
-    def postprocess_reponse(cls, response:str) -> str:
+    # @classmethod
+    def postprocess_reponse(self, response:str) -> str:
         def check(candidate:str):
             # if len(candidate) == 1 and candidate.upper() in 'ABCD':
             #     return candidate.upper()
@@ -106,7 +107,8 @@ DO NOT add any extra text or format decoration!
         if ans: return ans
         
         print(f'> {response} < unformatted response')
-        FileIO.txt_dump(f'{response}\n\n', SRC_DIR/'unformatted_response.txt', 'a')
+        FileIO.txt_dump(f'>> {self.model_name} <<\n{response}\n\n\n', SRC_DIR/'unformatted_response.txt', 'a')
+        return None
 
         for i in range(len(words)-2, 0, -1):
             ans = check(words[i])
