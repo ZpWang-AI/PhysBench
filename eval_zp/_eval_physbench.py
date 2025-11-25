@@ -170,12 +170,14 @@ def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
 
 
     _ans_id_dic = dict(zip('ABCD', range(4)))
+    _ans_id_dic[None] = 4
     pred, label = [], []
     for _val_label_dic in auto_load(PHYSBENCH_DATADIR/'val_answer.json'):
         if not _val_label_dic['answer']:
             continue
-        pred.append(_ans_id_dic[all_res_dic[_val_label_dic['idx']]])
-        label.append(_ans_id_dic[_val_label_dic['answer']])
+        _idx, _ans = _val_label_dic['idx'], _val_label_dic['answer']
+        pred.append(_ans_id_dic[all_res_dic[_idx]])
+        label.append(_ans_id_dic[_ans])
     # print(pred, label)
     import sklearn.metrics
     acc = sklearn.metrics.accuracy_score(label, pred)
