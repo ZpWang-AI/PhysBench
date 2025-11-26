@@ -50,6 +50,8 @@ class ModelToBeEvaluated:
         time_str = Datetime_().format_str('%Y-%m-%d_%H-%M-%S')
         self.error_record_jsonl = SRC_DIR / '~error_record' / f'{time_str}_{model_name}.txt'
         self.unformatted_response_txt = SRC_DIR / '~unformatted_response' / f'{time_str}_{model_name}.txt'
+        make_path(self.error_record_jsonl)
+        make_path(self.unformatted_response_txt)
 
     def qa(self, _one_piece:One_PhysBench) -> str:
         content = []
@@ -80,9 +82,8 @@ class ModelToBeEvaluated:
         except Exception as e:
             print(_one_piece.idx, str(e))
             print(gap_line())
-            err_rec:list = auto_load(self.error_record_jsonl)
-            err_rec.append({'idx':_one_piece.idx, 'err':str(e)})
-            auto_dump(self.error_record_jsonl)
+            _err_dic = {'idx':_one_piece.idx, 'err':str(e)}
+            auto_dump(_err_dic, self.error_record_jsonl)
             return ''
         
         raw_response = response
