@@ -47,6 +47,9 @@ class ModelToBeEvaluated:
     def __init__(self, model, model_name):
         self.model = model
         self.model_name = model_name
+        time_str = Datetime_().format_str('%Y-%m-%d_%H-%M-%S')
+        self.error_record_jsonl = SRC_DIR / '~error_record' / f'{time_str}_{model_name}.txt'
+        self.unformatted_response_txt = SRC_DIR / '~unformatted_response' / f'{time_str}_{model_name}.txt'
 
     def qa(self, _one_piece:One_PhysBench) -> str:
         content = []
@@ -71,11 +74,20 @@ class ModelToBeEvaluated:
                     'type': 'text', 'text': _part
                 })
         conversation = [{'role': 'user', 'content': content}]
-        response = self.model(conversation)
+
+        try:
+            response = self.model(conversation)
+        except Exception as e:
+            print(_one_piece.idx, str(e))
+            print(gap_line())
+            err_rec:list = auto_load(self.error_record_jsonl)
+            err_rec.append({'idx':_one_piece.idx, 'err':str(e)})
+            auto_dump(self.error_record_jsonl)
+            return ''
+        
         raw_response = response
         _output = self.postprocess_reponse(raw_response)
-        if _output:
-            return _output
+        if _output: return _output
         
         format_conversation = [{
             'role': 'user', 'content': [
@@ -94,9 +106,12 @@ DO NOT add any extra text or format decoration!
         response = self.model(format_conversation)
         formatted_response = response
         _output = self.postprocess_reponse(response)
-        if not _output:
-            FileIO.txt_dump(f'>> {self.model_name} <<\n{gap_line(fillchar="-")}\n{raw_response}\n{gap_line(fillchar="-")}\n{formatted_response}\n{gap_line()}\n', SRC_DIR/'~unformatted_response.txt', 'a')
-        return _output
+        if _output: return _output
+
+        FileIO.txt_dump(
+            f'>> {self.model_name} <<\n{gap_line(fillchar="-")}\n{raw_response}\n{gap_line(fillchar="-")}\n{formatted_response}\n{gap_line()}\n', 
+            self.unformatted_response_txt, 'a')
+        return ''
     
     # @classmethod
     def postprocess_reponse(self, response:str) -> str:
@@ -114,6 +129,11 @@ DO NOT add any extra text or format decoration!
             match = re.match(r'^\W([A-D])(.)?\W$', candidate)
             if match:
                 return match.group(1)
+        
+        def check4(candidate: str):
+            match = re.match(r'\\boxed{([A-D])(.)?}', candidate)
+            if match:
+                return match.group(1)
 
         response = response.strip()
 
@@ -122,14 +142,14 @@ DO NOT add any extra text or format decoration!
 
         words = response.split()
 
-        ans = check2(words[0])
-        if ans: return ans
-        ans = check2(words[-1])
-        if ans: return ans
-        ans = check3(words[0])
-        if ans: return ans
-        ans = check3(words[-1])
-        if ans: return ans
+        for p in [0, -1]:
+            _word = words[p]
+            ans = check2(_word)
+            if ans: return ans
+            ans = check3(_word)
+            if ans: return ans
+            ans = check4(_word)
+            if ans: return ans
 
         if len(words) == 3 and re.match(r'^\W+$', words[0]) and re.match(r'^\W+$', words[2]):
             ans = check2(words[1])
@@ -149,6 +169,8 @@ DO NOT add any extra text or format decoration!
 def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
     save_filename = SRC_DIR / 'results' / f'{model_name}.json'
     all_res = auto_load(save_filename) if save_filename.exists() else []
+    for _res in all_res: 
+        if not _res['answer']: _res['answer'] = ''
     all_res_dic = {_dic['idx']:_dic['answer'] for _dic in all_res}
     for one_piece in tqdm.tqdm(PhysBenchData()):
         if just_val and one_piece.split != 'val':
@@ -170,7 +192,7 @@ def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
 
 
     _ans_id_dic = dict(zip('ABCD', range(4)))
-    _ans_id_dic[None] = 4
+    _ans_id_dic[''] = 4
     pred, label = [], []
     for _val_label_dic in auto_load(PHYSBENCH_DATADIR/'val_answer.json'):
         if not _val_label_dic['answer']:
