@@ -48,7 +48,7 @@ class ModelToBeEvaluated:
         self.model = model
         self.model_name = model_name
         time_str = Datetime_().format_str('%Y-%m-%d_%H-%M-%S')
-        self.error_record_jsonl = SRC_DIR / '~error_record' / f'{time_str}_{model_name}.txt'
+        self.error_record_jsonl = SRC_DIR / '~error_record' / f'{time_str}_{model_name}.jsonl'
         self.unformatted_response_txt = SRC_DIR / '~unformatted_response' / f'{time_str}_{model_name}.txt'
         make_path(file_path=self.error_record_jsonl)
         make_path(file_path=self.unformatted_response_txt)
