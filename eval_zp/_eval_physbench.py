@@ -137,6 +137,7 @@ DO NOT add any extra text or format decoration!
                 return match.group(1)
 
         response = response.strip()
+        if not response: return ''
 
         ans = check_ABCD(response)
         if ans: return ans
@@ -158,13 +159,7 @@ DO NOT add any extra text or format decoration!
             ans = check3(words[1])
             if ans: return ans
 
-        return None
-
-        for i in range(len(words)-2, 0, -1):
-            ans = check(words[i])
-            if ans:
-                return ans
-        return None
+        return ''
     
 
 def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
