@@ -100,6 +100,7 @@ class ModelToBeEvaluated:
 Given the whole reasoning paragraph, conclude the output shortly.
 JUST output one single choice: `A.`, `B.`, `C.`, or `D.`.
 DO NOT add any extra text or format decoration!
+No Thinking!
 '''.strip()
                 }
             ]
