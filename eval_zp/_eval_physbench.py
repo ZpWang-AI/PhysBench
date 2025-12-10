@@ -44,9 +44,10 @@ class PhysBenchData:
 
 
 class ModelToBeEvaluated:
-    def __init__(self, model, model_name):
+    def __init__(self, model, model_name, fps:float=1):
         self.model = model
         self.model_name = model_name
+        self.fps = fps
         time_str = Datetime_().format_str('%Y-%m-%d_%H-%M-%S')
         self.error_record_jsonl = PHYSBENCH_SRC_DIR / '~error_record' / f'{time_str}_{model_name}.jsonl'
         self.unformatted_response_txt = PHYSBENCH_SRC_DIR / '~unformatted_response' / f'{time_str}_{model_name}.txt'
@@ -78,7 +79,7 @@ class ModelToBeEvaluated:
         conversation = [{'role': 'user', 'content': content}]
 
         try:
-            response = self.model(conversation)
+            response = self.model(conversation, fps=self.fps)
         except Exception as e:
             print(_one_piece.idx, str(e))
             print(gap_line())
@@ -192,6 +193,7 @@ def eval_physbench(
 ):
     if not isinstance(model, ModelToBeEvaluated):
         model = ModelToBeEvaluated(model=model, model_name=model_name)
+    model.fps = 1
     if save_filepath is None:
         save_filepath = PHYSBENCH_SRC_DIR / 'results' / f'{model_name}.json' 
     all_res = auto_load(save_filepath) if save_filepath.exists() else []
