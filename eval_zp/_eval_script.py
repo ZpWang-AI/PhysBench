@@ -7,7 +7,7 @@ if __name__ == '__main__':
     _max_new_tokens = 2048
     _model = lambda x: 'A'
     _model_name = 'all_A'
-    _model = QwenVL(batch_output=False, max_new_tokens=_max_new_tokens)
+    _model = Qwen2_5_VL(batch_output=False, max_new_tokens=_max_new_tokens)
     _model_name = 'qwenvl_raw'
     _model = LLaVA_NeXT_Video(max_new_tokens=_max_new_tokens)
     _model_name = 'llavanv_raw'

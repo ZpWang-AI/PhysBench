@@ -2,9 +2,9 @@ from utils_zp import *
 from llm_zp import *
 
 
-SRC_DIR = add_sys_path(__file__, 1)
-REPO_DIR = SRC_DIR.parent
-PHYSBENCH_DATADIR = path(REPO_DIR, 'eval', 'physbench')
+PHYSBENCH_SRC_DIR = add_sys_path(__file__, 1)
+PHYSBENCH_REPO_DIR = PHYSBENCH_SRC_DIR.parent
+PHYSBENCH_DATA_DIR = path(PHYSBENCH_REPO_DIR, 'eval', 'physbench')
 
 
 @dataclass
@@ -19,7 +19,7 @@ class One_PhysBench:
 class PhysBenchData:
     def __init__(self, data_json=None):
         if not data_json:
-            data_json = PHYSBENCH_DATADIR / 'test.json'
+            data_json = PHYSBENCH_DATA_DIR / 'test.json'
         self.data_list = auto_load(data_json)
         # print(len(self))
     
@@ -48,8 +48,8 @@ class ModelToBeEvaluated:
         self.model = model
         self.model_name = model_name
         time_str = Datetime_().format_str('%Y-%m-%d_%H-%M-%S')
-        self.error_record_jsonl = SRC_DIR / '~error_record' / f'{time_str}_{model_name}.jsonl'
-        self.unformatted_response_txt = SRC_DIR / '~unformatted_response' / f'{time_str}_{model_name}.txt'
+        self.error_record_jsonl = PHYSBENCH_SRC_DIR / '~error_record' / f'{time_str}_{model_name}.jsonl'
+        self.unformatted_response_txt = PHYSBENCH_SRC_DIR / '~unformatted_response' / f'{time_str}_{model_name}.txt'
         # make_path(file_path=self.error_record_jsonl)
         # make_path(file_path=self.unformatted_response_txt)
 
@@ -58,14 +58,14 @@ class ModelToBeEvaluated:
         file_needle = 0
         for _part in re.split(r'(<video>|<image>)', _one_piece.question):
             if _part == '<video>':
-                _filename = PHYSBENCH_DATADIR / 'video' / _one_piece.file_names[file_needle]
+                _filename = PHYSBENCH_DATA_DIR / 'video' / _one_piece.file_names[file_needle]
                 _filename = str(_filename)
                 file_needle += 1
                 content.append({
                     'type': 'video', 'video': _filename
                 })
             elif _part == '<image>':
-                _filename = PHYSBENCH_DATADIR / 'image' / _one_piece.file_names[file_needle]
+                _filename = PHYSBENCH_DATA_DIR / 'image' / _one_piece.file_names[file_needle]
                 _filename = str(_filename)
                 file_needle += 1
                 content.append({
@@ -161,19 +161,48 @@ No Thinking!
             if ans: return ans
 
         return ''
-    
 
-def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
-    save_filename = SRC_DIR / 'results' / f'{model_name}.json'
-    all_res = auto_load(save_filename) if save_filename.exists() else []
-    for _res in all_res: 
+
+def eval_physbench_is_finished(
+    model_name:str=None, 
+    save_filepath=None,
+    just_val=True,
+):
+    assert model_name or save_filepath
+    if save_filepath is None:
+        save_filepath = PHYSBENCH_SRC_DIR / 'results' / f'{model_name}.json' 
+    all_res = auto_load(save_filepath) if save_filepath.exists() else []
+    all_res_dic = {}
+    for _res in all_res:
         if not _res['answer']: _res['answer'] = ''
-    all_res_dic = {_dic['idx']:_dic['answer'] for _dic in all_res}
+        all_res_dic[_res['idx']] = _res['answer']
+
+    for one_piece in (PhysBenchData()):
+        if just_val and one_piece.split != 'val': continue
+        if one_piece.idx in all_res_dic: continue
+        return False
+    return True
+
+
+def eval_physbench(
+    model:Callable, 
+    model_name:str, 
+    just_val=True,
+    save_filepath=None,
+):
+    if not isinstance(model, ModelToBeEvaluated):
+        model = ModelToBeEvaluated(model=model, model_name=model_name)
+    if save_filepath is None:
+        save_filepath = PHYSBENCH_SRC_DIR / 'results' / f'{model_name}.json' 
+    all_res = auto_load(save_filepath) if save_filepath.exists() else []
+    all_res_dic = {}
+    for _res in all_res:
+        if not _res['answer']: _res['answer'] = ''
+        all_res_dic[_res['idx']] = _res['answer']
+
     for one_piece in tqdm.tqdm(PhysBenchData()):
-        if just_val and one_piece.split != 'val':
-            continue
-        if one_piece.idx in all_res_dic and all_res_dic[one_piece.idx]:
-            continue
+        if just_val and one_piece.split != 'val': continue
+        if one_piece.idx in all_res_dic and all_res_dic[one_piece.idx]: continue
 
         response = model.qa(one_piece)
 
@@ -185,13 +214,12 @@ def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
                 if _dic['idx'] == one_piece.idx:
                     _dic['answer'] = response
         all_res_dic[one_piece.idx] = response
-        auto_dump(all_res, save_filename)
-
+        auto_dump(all_res, save_filepath)
 
     _ans_id_dic = dict(zip('ABCD', range(4)))
     _ans_id_dic[''] = 4
     pred, label = [], []
-    for _val_label_dic in auto_load(PHYSBENCH_DATADIR/'val_answer.json'):
+    for _val_label_dic in auto_load(PHYSBENCH_DATA_DIR/'val_answer.json'):
         if not _val_label_dic['answer']:
             continue
         _idx, _ans = _val_label_dic['idx'], _val_label_dic['answer']
@@ -201,11 +229,7 @@ def eval_physbench(model:ModelToBeEvaluated, model_name:str, just_val=True):
     import sklearn.metrics
     acc = sklearn.metrics.accuracy_score(label, pred)
     print(acc, len(pred)*acc, len(pred))
-    return
-    p,r,f,cnt = sklearn.metrics.precision_recall_fscore_support(label, pred)
-    print(
-        f'p: {p}\nr: {r}\nf: {f}\nlabels: {cnt}\nmacro-f1: {np.average(f):.4f}'
-    )
+    return acc
 
 
 if __name__ == '__main__':
@@ -213,7 +237,7 @@ if __name__ == '__main__':
 
     _model = lambda x: 'A'
     _model_name = 'all_A'
-    _model = QwenVL(batch_output=False)
+    _model = Qwen2_5_VL(batch_output=False)
     _model_name = 'qwenvl_raw'
     _model = LLaVA_NeXT_Video()
     _model_name = 'llavanv_raw'

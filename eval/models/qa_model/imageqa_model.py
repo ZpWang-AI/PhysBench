@@ -754,7 +754,7 @@ class Cambrian(QAModelInstance):
 		cprint(outputs, 'cyan')
 		return outputs
 
-class QwenVL(QAModelInstance):
+class Qwen2_5_VL(QAModelInstance):
 	def __init__(self, ckpt="Qwen/Qwen-VL", torch_device=torch.device("cuda"), model_precision=torch.float32):
 		from transformers import AutoModelForCausalLM, AutoTokenizer
 		self.tokenizer = AutoTokenizer.from_pretrained(ckpt, trust_remote_code=True)
